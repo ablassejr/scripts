@@ -1,7 +1,6 @@
 ## TOOLS -
 - bashmarks
 - git
-- asdf(nodjs, python, rust)
 - python
 - cargo
 - chezmoi
@@ -21,3 +20,4 @@
 - snap/snapd
 - flatpak
 - unzip
+- mise(nodejs, python, cargo, ruby, copilot, claude-code, neovim@0.12.0)
