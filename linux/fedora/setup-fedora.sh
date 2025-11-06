@@ -43,14 +43,14 @@ update_system() {
 enable_rpm_fusion() {
   print_section "Enabling RPM Fusion Repositories"
   sudo dnf install -y \
-    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 }
 
 # Install development tools
 install_dev_tools() {
   print_section "Installing Development Tools"
-  sudo dnf group install development-tools sound-and-video system-tools -y
+  sudo dnf group install -y @development-tools @sound-and-video @system-tools
   sudo dnf install -y gcc gcc-c++ make cmake
   sudo dnf install -y kernel-devel kernel-headers
 }
@@ -75,7 +75,7 @@ install_multimedia() {
   print_section "Installing Multimedia Codecs"
   sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel
   sudo dnf install -y lame\* --exclude=lame-devel
-  sudo dnf group upgrade -y sound-and-video system-tools
+  sudo dnf group upgrade -y @sound-and-video @system-tools
 }
 
 # Install development languages
@@ -106,10 +106,10 @@ install_docker() {
 
   if ! command_exists docker; then
     sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
     sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo systemctl enable --now docker
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker "$USER"
     print_info "Added $USER to docker group. Please log out and back in."
   fi
 }
@@ -125,7 +125,7 @@ install_virtualization() {
   print_section "Installing Virtualization Tools"
   sudo dnf install -y @virtualization
   sudo systemctl enable --now libvirtd
-  sudo usermod -aG libvirt $USER
+  sudo usermod -aG libvirt "$USER"
 }
 
 # Install snap support
