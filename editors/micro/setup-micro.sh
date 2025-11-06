@@ -38,10 +38,12 @@ install_micro() {
         return
     fi
 
-    cd /tmp
+    local tmp_dir=$(mktemp -d)
+    cd "$tmp_dir" || return 1
     curl https://getmic.ro | bash
     sudo mv micro /usr/local/bin/
-    cd -
+    cd - > /dev/null
+    rm -rf "$tmp_dir"
 
     print_info "Micro installed successfully"
 }

@@ -38,7 +38,9 @@ install_homebrew() {
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
         # Add to PATH
-        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
+        if ! grep -q "/home/linuxbrew/.linuxbrew/bin/brew shellenv" ~/.bashrc 2>/dev/null; then
+            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
+        fi
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     else
         print_info "Homebrew already installed"
@@ -51,7 +53,9 @@ install_mise() {
 
     if ! command_exists mise; then
         curl https://mise.run | sh
-        echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+        if ! grep -q "mise activate bash" ~/.bashrc 2>/dev/null; then
+            echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+        fi
     else
         print_info "mise already installed"
     fi
@@ -87,7 +91,9 @@ install_zoxide() {
 
     if ! command_exists zoxide; then
         curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
-        echo 'eval "$(zoxide init bash)"' >> ~/.bashrc
+        if ! grep -q "zoxide init bash" ~/.bashrc 2>/dev/null; then
+            echo 'eval "$(zoxide init bash)"' >> ~/.bashrc
+        fi
     else
         print_info "zoxide already installed"
     fi
@@ -99,7 +105,9 @@ install_starship() {
 
     if ! command_exists starship; then
         curl -sS https://starship.rs/install.sh | sh -s -- -y
-        echo 'eval "$(starship init bash)"' >> ~/.bashrc
+        if ! grep -q "starship init bash" ~/.bashrc 2>/dev/null; then
+            echo 'eval "$(starship init bash)"' >> ~/.bashrc
+        fi
     else
         print_info "Starship already installed"
     fi
@@ -112,7 +120,9 @@ install_blesh() {
     if [ ! -f "$HOME/.local/share/blesh/ble.sh" ]; then
         git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
         make -C /tmp/ble.sh install PREFIX=~/.local
-        echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
+        if ! grep -q "blesh/ble.sh" ~/.bashrc 2>/dev/null; then
+            echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
+        fi
         rm -rf /tmp/ble.sh
     else
         print_info "ble.sh already installed"
@@ -148,13 +158,14 @@ install_bat() {
 
     if ! command_exists bat && ! command_exists batcat; then
         # Install via GitHub releases
-        cd /tmp
+        local tmp_dir=$(mktemp -d)
+        cd "$tmp_dir" || return 1
         BAT_VERSION="0.24.0"
         wget https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-x86_64-unknown-linux-musl.tar.gz
         tar xzf bat-v${BAT_VERSION}-x86_64-unknown-linux-musl.tar.gz
         sudo cp bat-v${BAT_VERSION}-x86_64-unknown-linux-musl/bat /usr/local/bin/
-        rm -rf bat-*
-        cd -
+        cd - > /dev/null
+        rm -rf "$tmp_dir"
     else
         print_info "bat already installed"
     fi
@@ -165,13 +176,14 @@ install_ripgrep() {
     print_section "Installing ripgrep"
 
     if ! command_exists rg; then
-        cd /tmp
+        local tmp_dir=$(mktemp -d)
+        cd "$tmp_dir" || return 1
         RG_VERSION="14.0.3"
         wget https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl.tar.gz
         tar xzf ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl.tar.gz
         sudo cp ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/
-        rm -rf ripgrep-*
-        cd -
+        cd - > /dev/null
+        rm -rf "$tmp_dir"
     else
         print_info "ripgrep already installed"
     fi
@@ -182,13 +194,14 @@ install_fd() {
     print_section "Installing fd"
 
     if ! command_exists fd; then
-        cd /tmp
+        local tmp_dir=$(mktemp -d)
+        cd "$tmp_dir" || return 1
         FD_VERSION="9.0.0"
         wget https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-musl.tar.gz
         tar xzf fd-v${FD_VERSION}-x86_64-unknown-linux-musl.tar.gz
         sudo cp fd-v${FD_VERSION}-x86_64-unknown-linux-musl/fd /usr/local/bin/
-        rm -rf fd-*
-        cd -
+        cd - > /dev/null
+        rm -rf "$tmp_dir"
     else
         print_info "fd already installed"
     fi
@@ -204,7 +217,7 @@ install_chtsh() {
         chmod +x ~/.local/bin/cht.sh
 
         # Add to PATH if not there
-        if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && ! grep -q '.local/bin.*PATH' ~/.bashrc 2>/dev/null; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
         fi
     else

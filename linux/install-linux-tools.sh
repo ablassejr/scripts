@@ -126,10 +126,12 @@ install_bashmarks() {
         return
     fi
 
-    git clone https://github.com/huyng/bashmarks.git /tmp/bashmarks
-    cd /tmp/bashmarks
+    local tmp_dir=$(mktemp -d)
+    git clone https://github.com/huyng/bashmarks.git "$tmp_dir/bashmarks"
+    cd "$tmp_dir/bashmarks" || return 1
     make install
-    cd -
+    cd - > /dev/null
+    rm -rf "$tmp_dir"
     print_info "Please add 'source ~/.local/bin/bashmarks.sh' to your .bashrc"
 }
 
@@ -295,25 +297,25 @@ install_dropbox() {
         return
     fi
 
+    local tmp_dir=$(mktemp -d)
     case $DISTRO in
         ubuntu|debian)
-            cd /tmp
+            cd "$tmp_dir" || return 1
             wget -O dropbox.deb "https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_2020.03.04_amd64.deb"
             sudo apt install -y ./dropbox.deb
-            rm dropbox.deb
-            cd -
+            cd - > /dev/null
             ;;
         fedora)
-            cd /tmp
+            cd "$tmp_dir" || return 1
             wget -O dropbox.rpm "https://www.dropbox.com/download?dl=packages/fedora/nautilus-dropbox-2020.03.04-1.fedora.x86_64.rpm"
             sudo dnf install -y ./dropbox.rpm
-            rm dropbox.rpm
-            cd -
+            cd - > /dev/null
             ;;
         *)
             print_warning "Cannot install dropbox on $DISTRO. Please install manually."
             ;;
     esac
+    rm -rf "$tmp_dir"
 }
 
 # Install github desktop
