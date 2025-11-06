@@ -1,23 +1,19 @@
-## TOOLS -
+# TOOLS TO INSTALL-
+
+- snap/snapd
+- flatpak
 - bashmarks
-- git
-- python
-- cargo
-- chezmoi
-- sdkman
 - zed
-- neovim
+- neovim, micro
 - docker
 - firefox
 - composer
 - devdocs
 - ghostty
-- onedrive
+- pcloud
 - dropbox
-- guix
-- curl
-- wget
-- snap/snapd
-- flatpak
-- unzip
-- mise(nodejs, python, cargo, ruby, copilot, claude-code, neovim@0.12.0)
+- github desktop
+- gitkraken
+- nvidia drivers
+- rsync
+- razer drivers

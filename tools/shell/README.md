@@ -1,5 +1,11 @@
 ## TOOLS -
+- curl
+- wget
+- git
+- mise(nodejs, python, cargo, ruby, copilot, claude-code, neovim@0.12.0, rust)
+- unzip
 - fzf
+- guix
 - zoxide
 - blesh
 - ssh
@@ -8,3 +14,5 @@
 - oh-my-bash
 - copilot
 - claude
+- gemini
+- chezmoi, yadl
