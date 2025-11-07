@@ -147,7 +147,9 @@ install_mise() {
     fi
 
     curl https://mise.run | sh
-    echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+    if ! grep -q "mise activate bash" ~/.bashrc 2>/dev/null; then
+        echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+    fi
 
     print_info "Installing mise tools: nodejs, python, cargo, ruby, neovim@0.12.0, rust..."
     ~/.local/bin/mise use --global node@lts
@@ -217,7 +219,9 @@ install_zoxide() {
     fi
 
     curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
-    echo 'eval "$(zoxide init bash)"' >> ~/.bashrc
+    if ! grep -q "zoxide init bash" ~/.bashrc 2>/dev/null; then
+        echo 'eval "$(zoxide init bash)"' >> ~/.bashrc
+    fi
 }
 
 # Install blesh
@@ -230,7 +234,9 @@ install_blesh() {
 
     git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
     make -C /tmp/ble.sh install PREFIX=~/.local
-    echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
+    if ! grep -q "source ~/.local/share/blesh/ble.sh" ~/.bashrc 2>/dev/null; then
+        echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
+    fi
     rm -rf /tmp/ble.sh 2>/dev/null || true
 }
 

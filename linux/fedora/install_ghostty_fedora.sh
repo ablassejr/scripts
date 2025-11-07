@@ -26,7 +26,7 @@ print_warning() {
 
 # Check if running on Fedora
 if ! grep -q "Fedora" /etc/os-release 2>/dev/null; then
-    print_error "This script is designed for Fedora. Detected: $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
+    print_error "This script is designed for Fedora. Detected: $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
     exit 1
 fi
 

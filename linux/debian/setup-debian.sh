@@ -5,7 +5,8 @@
 # Optimized for Debian stable
 #####################################
 
-set -e
+# Disable exit on error to allow continuing on package failures
+set +e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -33,45 +34,53 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Safe package installation function
+safe_apt_install() {
+    local packages=("$@")
+    local failed=()
+
+    for pkg in "${packages[@]}"; do
+        if sudo apt install -y "$pkg" 2>/dev/null; then
+            print_info "✓ Installed: $pkg"
+        else
+            print_warning "✗ Failed to install: $pkg"
+            failed+=("$pkg")
+        fi
+    done
+
+    if [ ${#failed[@]} -gt 0 ]; then
+        print_warning "Failed packages: ${failed[*]}"
+        return 1
+    fi
+    return 0
+}
+
 # Update system
 update_system() {
     print_section "Updating System"
-    sudo apt update
-    sudo apt upgrade -y
-    sudo apt dist-upgrade -y
+    sudo apt update || print_warning "Failed to update package lists"
+    sudo apt upgrade -y || print_warning "Failed to upgrade packages"
+    sudo apt dist-upgrade -y || print_warning "Failed to dist-upgrade"
 }
 
 # Enable contrib and non-free repositories
 enable_extra_repos() {
     print_section "Enabling Contrib and Non-Free Repositories"
-    sudo apt-add-repository contrib non-free -y || true
-    sudo apt update
+    sudo add-apt-repository contrib -y || print_warning "Failed to add contrib repo"
+    sudo add-apt-repository non-free -y || print_warning "Failed to add non-free repo"
+    sudo apt update || print_warning "Failed to update after adding repos"
 }
 
 # Install build essentials
 install_build_essentials() {
     print_section "Installing Build Essentials"
-    sudo apt install -y build-essential
-    sudo apt install -y linux-headers-$(uname -r)
-    sudo apt install -y dkms
+    safe_apt_install build-essential "linux-headers-$(uname -r)" dkms
 }
 
 # Install common utilities
 install_utilities() {
     print_section "Installing Common Utilities"
-    sudo apt install -y curl wget git vim nano
-    sudo apt install -y unzip zip tar gzip bzip2
-    sudo apt install -y htop
-    sudo apt install -y tree
-    sudo apt install -y net-tools
-    sudo apt install -y openssh-client openssh-server
-    sudo apt install -y rsync
-    sudo apt install -y jq
-    sudo apt install -y tmux screen
-    sudo apt install -y apt-transport-https
-    sudo apt install -y ca-certificates
-    sudo apt install -y gnupg
-    sudo apt install -y lsb-release
+    safe_apt_install curl wget git vim nano unzip zip tar gzip bzip2 htop tree net-tools openssh-client openssh-server rsync jq tmux screen apt-transport-https ca-certificates gnupg lsb-release
 }
 
 # Install development tools

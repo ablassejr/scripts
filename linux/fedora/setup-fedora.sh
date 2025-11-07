@@ -5,7 +5,8 @@
 # Optimized for Fedora Workstation
 #####################################
 
-set -e
+# Disable exit on error to allow continuing on package failures
+set +e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -33,49 +34,61 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Safe package installation function for DNF
+safe_dnf_install() {
+  local packages=("$@")
+  local failed=()
+
+  for pkg in "${packages[@]}"; do
+    if sudo dnf install -y "$pkg" 2>/dev/null; then
+      print_info "✓ Installed: $pkg"
+    else
+      print_warning "✗ Failed to install: $pkg"
+      failed+=("$pkg")
+    fi
+  done
+
+  if [ ${#failed[@]} -gt 0 ]; then
+    print_warning "Failed packages: ${failed[*]}"
+    return 1
+  fi
+  return 0
+}
+
 # Update system
 update_system() {
   print_section "Updating System"
-  sudo dnf upgrade --refresh -y
+  sudo dnf upgrade --refresh -y || print_warning "Failed to upgrade packages"
 }
 
 # Enable RPM Fusion repositories
 enable_rpm_fusion() {
   print_section "Enabling RPM Fusion Repositories"
   sudo dnf install -y \
-    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" \
+    || print_warning "Failed to install RPM Fusion repositories"
 }
 
 # Install development tools
 install_dev_tools() {
   print_section "Installing Development Tools"
-  sudo dnf group install development-tools sound-and-video system-tools -y
-  sudo dnf install -y gcc gcc-c++ make cmake
-  sudo dnf install -y kernel-devel kernel-headers
+  sudo dnf group install development-tools sound-and-video system-tools -y || print_warning "Failed to install some groups"
+  safe_dnf_install gcc gcc-c++ make cmake kernel-devel kernel-headers
 }
 
 # Install common utilities
 install_utilities() {
   print_section "Installing Common Utilities"
-  sudo dnf install -y curl wget git vim nano
-  sudo dnf install -y unzip zip tar gzip bzip2
-  sudo dnf install -y htop btop
-  sudo dnf install -y tree
-  sudo dnf install -y net-tools
-  sudo dnf install -y openssh-clients openssh-server
-  sudo dnf install -y rsync
-  sudo dnf install -y jq yq
-  sudo dnf install -y tmux
-  sudo dnf install -y util-linux-user # for chsh
+  safe_dnf_install curl wget git vim nano unzip zip tar gzip bzip2 htop btop tree net-tools openssh-clients openssh-server rsync jq yq tmux util-linux-user
 }
 
 # Install multimedia codecs
 install_multimedia() {
   print_section "Installing Multimedia Codecs"
-  sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel
-  sudo dnf install -y lame\* --exclude=lame-devel
-  sudo dnf group upgrade -y sound-and-video system-tools
+  sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel || print_warning "Failed to install some gstreamer plugins"
+  sudo dnf install -y lame\* --exclude=lame-devel || print_warning "Failed to install lame"
+  sudo dnf group upgrade -y sound-and-video system-tools || print_warning "Failed to upgrade groups"
 }
 
 # Install development languages
@@ -83,21 +96,21 @@ install_languages() {
   print_section "Installing Development Languages"
 
   # Python
-  sudo dnf install -y python3 python3-pip python3-devel
+  safe_dnf_install python3 python3-pip python3-devel
 
   # Node.js
   if ! command_exists node; then
-    sudo dnf install -y nodejs npm
+    safe_dnf_install nodejs npm
   fi
 
   # Rust
   if ! command_exists cargo; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    source "$HOME/.cargo/env"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || print_warning "Failed to install Rust"
+    [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
   fi
 
   # Go
-  sudo dnf install -y golang
+  safe_dnf_install golang
 }
 
 # Install Docker
@@ -105,12 +118,13 @@ install_docker() {
   print_section "Installing Docker"
 
   if ! command_exists docker; then
-    sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo --overwrite
-    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --allowerasing --skip-broken
-    sudo systemctl enable --now docker
-    sudo usermod -aG docker $USER
-    print_info "Added $USER to docker group. Please log out and back in."
+    if safe_dnf_install dnf-plugins-core; then
+      sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo || print_warning "Failed to add Docker repo"
+      sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --allowerasing --skip-broken || print_warning "Failed to install Docker packages"
+      sudo systemctl enable --now docker || print_warning "Failed to enable docker service"
+      sudo usermod -aG docker "$USER" || print_warning "Failed to add user to docker group"
+      print_info "Added $USER to docker group. Please log out and back in."
+    fi
   fi
 }
 

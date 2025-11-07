@@ -149,6 +149,7 @@ bind -r L resize-pane -R 5
 # Copy mode vi bindings
 setw -g mode-keys vi
 bind -T copy-mode-vi v send -X begin-selection
+# Note: xclip must be installed for clipboard integration to work
 bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "xclip -in -selection clipboard"
 
 # No delay for escape key press

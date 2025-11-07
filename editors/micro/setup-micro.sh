@@ -40,7 +40,7 @@ install_micro() {
 
     local tmp_dir=$(mktemp -d)
     cd "$tmp_dir" || return 1
-    curl https://getmic.ro | bash
+    curl -fsSL https://getmic.ro | bash
     sudo mv micro /usr/local/bin/
     cd - > /dev/null
     rm -rf "$tmp_dir"
