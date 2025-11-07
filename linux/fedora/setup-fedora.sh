@@ -211,7 +211,6 @@ apply_system_tweaks() {
 # Install additional tools
 install_additional_tools() {
   print_section "Installing Additional Tools"
-  sudo dnf install -y neofetch --skip-unavailable
   sudo dnf install -y bat fd-find ripgrep --skip-unavailable
   sudo dnf install -y fzf
 }
