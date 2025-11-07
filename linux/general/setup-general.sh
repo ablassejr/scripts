@@ -244,13 +244,21 @@ setup_git() {
     if [ -z "$(git config --global user.name)" ]; then
         echo "Enter your Git username:"
         read git_name
-        git config --global user.name "$git_name"
+        if [ -n "$git_name" ]; then
+            git config --global user.name "$git_name"
+        else
+            print_warning "Git username not set (empty input)"
+        fi
     fi
 
     if [ -z "$(git config --global user.email)" ]; then
         echo "Enter your Git email:"
         read git_email
-        git config --global user.email "$git_email"
+        if [ -n "$git_email" ]; then
+            git config --global user.email "$git_email"
+        else
+            print_warning "Git email not set (empty input)"
+        fi
     fi
 
     # Useful git configurations
@@ -263,6 +271,12 @@ setup_git() {
 # Create useful aliases
 create_aliases() {
     print_section "Creating Useful Aliases"
+
+    # Backup existing aliases if they exist
+    if [ -f ~/.bash_aliases ]; then
+        print_info "Existing .bash_aliases found, backing up..."
+        cp ~/.bash_aliases ~/.bash_aliases.backup
+    fi
 
     cat >> ~/.bash_aliases << 'EOF'
 # Navigation

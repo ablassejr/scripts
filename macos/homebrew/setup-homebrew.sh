@@ -21,6 +21,10 @@ print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
 print_section() {
     echo -e "\n${BLUE}==== $1 ====${NC}\n"
 }

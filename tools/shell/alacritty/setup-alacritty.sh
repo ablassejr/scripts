@@ -234,7 +234,7 @@ set_default_terminal() {
     print_section "Setting Alacritty as Default Terminal"
 
     if command_exists update-alternatives; then
-        sudo update-alternatives --set x-terminal-emulator $(which alacritty) || print_warning "Could not set as default"
+        sudo update-alternatives --set x-terminal-emulator "$(which alacritty)" || print_warning "Could not set as default"
     fi
 
     # For GNOME

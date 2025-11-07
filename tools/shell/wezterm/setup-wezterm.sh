@@ -58,7 +58,7 @@ install_wezterm() {
             sudo apt install -y wezterm
             ;;
         fedora)
-            sudo dnf install -y https://github.com/wez/wezterm/releases/download/nightly/wezterm-nightly-fedora$(rpm -E %{fedora}).rpm
+            sudo dnf install -y "https://github.com/wez/wezterm/releases/download/nightly/wezterm-nightly-fedora$(rpm -E %{fedora}).rpm"
             ;;
         arch|manjaro)
             if command_exists yay; then

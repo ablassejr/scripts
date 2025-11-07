@@ -106,10 +106,10 @@ install_docker() {
 
   if ! command_exists docker; then
     sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo --overwrite
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
     sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --allowerasing --skip-broken
     sudo systemctl enable --now docker
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker "$USER"
     print_info "Added $USER to docker group. Please log out and back in."
   fi
 }

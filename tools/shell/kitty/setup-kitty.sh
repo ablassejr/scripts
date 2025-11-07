@@ -56,13 +56,13 @@ install_kitty() {
             curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
 
             # Create symbolic links
-            sudo ln -sf ~/.local/kitty.app/bin/kitty /usr/local/bin/kitty
-            sudo ln -sf ~/.local/kitty.app/bin/kitten /usr/local/bin/kitten
+            sudo ln -sf "$HOME/.local/kitty.app/bin/kitty" /usr/local/bin/kitty
+            sudo ln -sf "$HOME/.local/kitty.app/bin/kitten" /usr/local/bin/kitten
 
             # Desktop integration
             cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
             cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
-            sed -i "s|Icon=kitty|Icon=/home/$USER/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+            sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
             ;;
         *)
             print_warning "Unknown distribution. Using universal installer..."
@@ -220,7 +220,7 @@ set_default_terminal() {
     print_section "Setting Kitty as Default Terminal"
 
     if command_exists update-alternatives; then
-        sudo update-alternatives --set x-terminal-emulator $(which kitty) 2>/dev/null || print_warning "Could not set as default"
+        sudo update-alternatives --set x-terminal-emulator "$(which kitty)" 2>/dev/null || print_warning "Could not set as default"
     fi
 
     # For GNOME

@@ -44,7 +44,8 @@ update_system() {
 # Enable contrib and non-free repositories
 enable_extra_repos() {
     print_section "Enabling Contrib and Non-Free Repositories"
-    sudo apt-add-repository contrib non-free -y || true
+    sudo add-apt-repository contrib -y || true
+    sudo add-apt-repository non-free -y || true
     sudo apt update
 }
 
