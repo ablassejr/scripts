@@ -5,7 +5,8 @@
 # Installs Homebrew and common packages
 #####################################
 
-set -e
+# Disable exit on error to allow continuing on package failures
+set +e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,6 +32,27 @@ print_section() {
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Safe brew installation function
+safe_brew_install() {
+    local packages=("$@")
+    local failed=()
+
+    for pkg in "${packages[@]}"; do
+        if brew install "$pkg" 2>/dev/null; then
+            print_info "✓ Installed: $pkg"
+        else
+            print_warning "✗ Failed to install: $pkg"
+            failed+=("$pkg")
+        fi
+    done
+
+    if [ ${#failed[@]} -gt 0 ]; then
+        print_warning "Failed packages: ${failed[*]}"
+        return 1
+    fi
+    return 0
 }
 
 # Check if running on macOS
@@ -70,53 +92,25 @@ install_homebrew() {
 # Update Homebrew
 update_homebrew() {
     print_section "Updating Homebrew"
-    brew update
-    brew upgrade
+    brew update || print_warning "Failed to update Homebrew"
+    brew upgrade || print_warning "Failed to upgrade Homebrew packages"
 }
 
 # Install essential formulae
 install_essentials() {
     print_section "Installing Essential Formulae"
-
-    brew install git
-    brew install wget
-    brew install curl
-    brew install tree
-    brew install htop
-    brew install jq
-    brew install vim
-    brew install neovim
-    brew install tmux
-    brew install zsh
-    brew install fzf
-    brew install ripgrep
-    brew install fd
-    brew install bat
-    brew install exa
-    brew install zoxide
-    brew install starship
+    safe_brew_install git wget curl tree htop jq vim neovim tmux zsh fzf ripgrep fd bat exa zoxide starship
 }
 
 # Install development tools
 install_dev_tools() {
     print_section "Installing Development Tools"
 
-    # Version managers
-    brew install mise
+    # Version managers and programming languages
+    safe_brew_install mise node python3 go rust postgresql redis mysql-client
 
-    # Programming languages
-    brew install node
-    brew install python3
-    brew install go
-    brew install rust
-
-    # Database clients
-    brew install postgresql
-    brew install redis
-    brew install mysql-client
-
-    # Docker
-    brew install --cask docker
+    # Docker Desktop
+    brew install --cask docker || print_warning "Failed to install Docker Desktop"
 }
 
 # Install GUI applications
@@ -126,40 +120,40 @@ install_gui_apps() {
     print_info "Select applications to install:"
 
     read -p "Install VSCode? (y/n): " vscode
-    [[ "$vscode" == "y" ]] && brew install --cask visual-studio-code
+    [[ "$vscode" == "y" ]] && (brew install --cask visual-studio-code || print_warning "Failed to install VS Code")
 
     read -p "Install iTerm2? (y/n): " iterm
-    [[ "$iterm" == "y" ]] && brew install --cask iterm2
+    [[ "$iterm" == "y" ]] && (brew install --cask iterm2 || print_warning "Failed to install iTerm2")
 
     read -p "Install Alacritty? (y/n): " alacritty
-    [[ "$alacritty" == "y" ]] && brew install --cask alacritty
+    [[ "$alacritty" == "y" ]] && (brew install --cask alacritty || print_warning "Failed to install Alacritty")
 
     read -p "Install Firefox? (y/n): " firefox
-    [[ "$firefox" == "y" ]] && brew install --cask firefox
+    [[ "$firefox" == "y" ]] && (brew install --cask firefox || print_warning "Failed to install Firefox")
 
     read -p "Install Chrome? (y/n): " chrome
-    [[ "$chrome" == "y" ]] && brew install --cask google-chrome
+    [[ "$chrome" == "y" ]] && (brew install --cask google-chrome || print_warning "Failed to install Chrome")
 
     read -p "Install Spotify? (y/n): " spotify
-    [[ "$spotify" == "y" ]] && brew install --cask spotify
+    [[ "$spotify" == "y" ]] && (brew install --cask spotify || print_warning "Failed to install Spotify")
 
     read -p "Install Slack? (y/n): " slack
-    [[ "$slack" == "y" ]] && brew install --cask slack
+    [[ "$slack" == "y" ]] && (brew install --cask slack || print_warning "Failed to install Slack")
 
     read -p "Install Rectangle (window manager)? (y/n): " rectangle
-    [[ "$rectangle" == "y" ]] && brew install --cask rectangle
+    [[ "$rectangle" == "y" ]] && (brew install --cask rectangle || print_warning "Failed to install Rectangle")
 }
 
 # Install fonts
 install_fonts() {
     print_section "Installing Fonts"
 
-    brew tap homebrew/cask-fonts
-    brew install --cask font-fira-code
-    brew install --cask font-fira-code-nerd-font
-    brew install --cask font-jetbrains-mono
-    brew install --cask font-jetbrains-mono-nerd-font
-    brew install --cask font-hack-nerd-font
+    brew tap homebrew/cask-fonts || print_warning "Failed to tap homebrew/cask-fonts"
+    brew install --cask font-fira-code || print_warning "Failed to install Fira Code"
+    brew install --cask font-fira-code-nerd-font || print_warning "Failed to install Fira Code Nerd Font"
+    brew install --cask font-jetbrains-mono || print_warning "Failed to install JetBrains Mono"
+    brew install --cask font-jetbrains-mono-nerd-font || print_warning "Failed to install JetBrains Mono Nerd Font"
+    brew install --cask font-hack-nerd-font || print_warning "Failed to install Hack Nerd Font"
 }
 
 # Configure Git

@@ -5,7 +5,8 @@
 # Optimized for Ubuntu and Ubuntu-based distributions
 #####################################
 
-set -e
+# Disable exit on error to allow continuing on package failures
+set +e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -33,37 +34,45 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Safe package installation function
+safe_apt_install() {
+    local packages=("$@")
+    local failed=()
+
+    for pkg in "${packages[@]}"; do
+        if sudo apt install -y "$pkg" 2>/dev/null; then
+            print_info "✓ Installed: $pkg"
+        else
+            print_warning "✗ Failed to install: $pkg"
+            failed+=("$pkg")
+        fi
+    done
+
+    if [ ${#failed[@]} -gt 0 ]; then
+        print_warning "Failed packages: ${failed[*]}"
+        return 1
+    fi
+    return 0
+}
+
 # Update system
 update_system() {
     print_section "Updating System"
-    sudo apt update
-    sudo apt upgrade -y
-    sudo apt autoremove -y
+    sudo apt update || print_warning "Failed to update package lists"
+    sudo apt upgrade -y || print_warning "Failed to upgrade packages"
+    sudo apt autoremove -y || print_warning "Failed to autoremove packages"
 }
 
 # Install essential build tools
 install_build_essentials() {
     print_section "Installing Build Essentials"
-    sudo apt install -y build-essential
-    sudo apt install -y software-properties-common
-    sudo apt install -y apt-transport-https
-    sudo apt install -y ca-certificates
-    sudo apt install -y gnupg
-    sudo apt install -y lsb-release
+    safe_apt_install build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release
 }
 
 # Install common utilities
 install_utilities() {
     print_section "Installing Common Utilities"
-    sudo apt install -y curl wget git vim nano
-    sudo apt install -y unzip zip tar gzip
-    sudo apt install -y htop btop
-    sudo apt install -y tree
-    sudo apt install -y net-tools
-    sudo apt install -y openssh-client openssh-server
-    sudo apt install -y rsync
-    sudo apt install -y jq
-    sudo apt install -y tmux
+    safe_apt_install curl wget git vim nano unzip zip tar gzip htop btop tree net-tools openssh-client openssh-server rsync jq tmux
 }
 
 # Install development tools
@@ -71,20 +80,26 @@ install_dev_tools() {
     print_section "Installing Development Tools"
 
     # Python
-    sudo apt install -y python3 python3-pip python3-venv
+    safe_apt_install python3 python3-pip python3-venv
 
     # Node.js LTS
     if ! command_exists node; then
-        curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-        sudo apt install -y nodejs
+        if curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -; then
+            safe_apt_install nodejs
+        else
+            print_warning "Failed to add Node.js repository"
+        fi
     fi
 
     # Docker
     if ! command_exists docker; then
-        sudo apt install -y docker.io
-        sudo systemctl enable --now docker
-        sudo usermod -aG docker $USER
-        print_info "Added $USER to docker group. Please log out and back in for changes to take effect."
+        if sudo apt install -y docker.io; then
+            sudo systemctl enable --now docker || print_warning "Failed to enable docker"
+            sudo usermod -aG docker "$USER" || print_warning "Failed to add user to docker group"
+            print_info "Added $USER to docker group. Please log out and back in for changes to take effect."
+        else
+            print_warning "Failed to install docker.io"
+        fi
     fi
 }
 
@@ -93,13 +108,17 @@ install_snap_packages() {
     print_section "Installing Snap Packages"
 
     if ! command_exists snap; then
-        sudo apt install -y snapd
-        sudo systemctl enable --now snapd.socket
+        if sudo apt install -y snapd; then
+            sudo systemctl enable --now snapd.socket || print_warning "Failed to enable snapd"
+        else
+            print_warning "Failed to install snapd"
+            return
+        fi
     fi
 
     # Common snap packages
-    sudo snap install --classic code  # VS Code
-    sudo snap install --classic nvim  # Neovim
+    sudo snap install --classic code || print_warning "Failed to install VS Code via snap"
+    sudo snap install --classic nvim || print_warning "Failed to install Neovim via snap"
 }
 
 # Install flatpak
@@ -107,7 +126,7 @@ setup_flatpak() {
     print_section "Setting up Flatpak"
 
     if ! command_exists flatpak; then
-        sudo apt install -y flatpak
+        safe_apt_install flatpak
         sudo apt install -y gnome-software-plugin-flatpak
         flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
         print_warning "Please restart your system for Flatpak changes to take effect."
@@ -117,11 +136,12 @@ setup_flatpak() {
 # Configure firewall
 configure_firewall() {
     print_section "Configuring Firewall"
-    sudo apt install -y ufw
-    sudo ufw default deny incoming
-    sudo ufw default allow outgoing
-    sudo ufw allow ssh
-    sudo ufw --force enable
+    if safe_apt_install ufw; then
+        sudo ufw default deny incoming || print_warning "Failed to set ufw default deny"
+        sudo ufw default allow outgoing || print_warning "Failed to set ufw default allow"
+        sudo ufw allow ssh || print_warning "Failed to allow ssh"
+        sudo ufw --force enable || print_warning "Failed to enable ufw"
+    fi
 }
 
 # Install ZSH and Oh My Zsh
@@ -129,16 +149,16 @@ install_zsh() {
     print_section "Installing ZSH"
 
     if ! command_exists zsh; then
-        sudo apt install -y zsh
-        print_info "ZSH installed. To set as default shell, run: chsh -s \$(which zsh)"
+        if safe_apt_install zsh; then
+            print_info "ZSH installed. To set as default shell, run: chsh -s \$(which zsh)"
+        fi
     fi
 }
 
 # Install fonts
 install_fonts() {
     print_section "Installing Fonts"
-    sudo apt install -y fonts-firacode
-    sudo apt install -y fonts-powerline
+    safe_apt_install fonts-firacode fonts-powerline
 
     # Install Nerd Fonts
     if [ ! -d "$HOME/.local/share/fonts/NerdFonts" ]; then
