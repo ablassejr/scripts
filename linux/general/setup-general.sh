@@ -123,7 +123,7 @@ install_blesh() {
         if ! grep -q "blesh/ble.sh" ~/.bashrc 2>/dev/null; then
             echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
         fi
-        rm -rf /tmp/ble.sh
+        rm -rf /tmp/ble.sh 2>/dev/null || true
     else
         print_info "ble.sh already installed"
     fi

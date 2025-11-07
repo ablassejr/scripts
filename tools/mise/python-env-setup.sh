@@ -1,11 +1,10 @@
-echo "[env]
+echo [env]
 # Install seed packages (pip, setuptools, and wheel) into the virtual environment.
 _.python.venv = { path = ".venv", create = true, uv_create_args = ["--seed"] }
 
 [tools]
-python = "latest"
+python = \"latest\"
 
-[tasks.install]
-alias = "i"
-run = "pip install -r requirements.txt"" >>mise.toml
+[tasks.install] alias = \"i\"
+run = \"pip install -r requirements.txt\" >>mise.toml
 touch requirements.txt

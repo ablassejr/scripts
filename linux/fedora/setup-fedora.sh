@@ -106,8 +106,8 @@ install_docker() {
 
   if ! command_exists docker; then
     sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo --overwrite
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --allowerasing --skip-broken
     sudo systemctl enable --now docker
     sudo usermod -aG docker $USER
     print_info "Added $USER to docker group. Please log out and back in."
@@ -117,7 +117,7 @@ install_docker() {
 # Install Podman (Fedora's preferred container runtime)
 install_podman() {
   print_section "Installing Podman"
-  sudo dnf install -y podman podman-compose podman-docker
+  sudo dnf install -y podman podman-compose podman-docker --skip-broken
 }
 
 # Install virtualization tools
@@ -211,8 +211,8 @@ apply_system_tweaks() {
 # Install additional tools
 install_additional_tools() {
   print_section "Installing Additional Tools"
-  sudo dnf install -y neofetch
-  sudo dnf install -y bat fd-find ripgrep
+  sudo dnf install -y neofetch --skip-unavailable
+  sudo dnf install -y bat fd-find ripgrep --skip-unavailable
   sudo dnf install -y fzf
 }
 

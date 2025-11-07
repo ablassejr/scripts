@@ -231,7 +231,7 @@ install_blesh() {
     git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
     make -C /tmp/ble.sh install PREFIX=~/.local
     echo 'source ~/.local/share/blesh/ble.sh' >> ~/.bashrc
-    rm -rf /tmp/ble.sh
+    rm -rf /tmp/ble.sh 2>/dev/null || true
 }
 
 # Install ssh
