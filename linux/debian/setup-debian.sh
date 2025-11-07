@@ -199,7 +199,6 @@ configure_firewall() {
 # Install additional tools
 install_additional_tools() {
     print_section "Installing Additional Tools"
-    sudo apt install -y neofetch
     sudo apt install -y ripgrep fd-find || print_warning "Some tools not available"
     sudo apt install -y fzf
 }

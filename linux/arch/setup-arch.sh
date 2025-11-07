@@ -118,7 +118,6 @@ install_docker() {
 # Install additional tools
 install_additional_tools() {
     print_section "Installing Additional Tools"
-    sudo pacman -S --noconfirm neofetch
     sudo pacman -S --noconfirm bat fd ripgrep
     sudo pacman -S --noconfirm fzf
     sudo pacman -S --noconfirm exa
