@@ -62,6 +62,74 @@ install_yay() {
     fi
 }
 
+# Install packages from Package List
+install_from_package_list() {
+    print_section "Installing Packages from Package List"
+
+    local package_list_file="$(dirname "$0")/Package List.md"
+
+    if [ ! -f "$package_list_file" ]; then
+        print_warning "Package List.md not found at: $package_list_file"
+        print_info "Skipping package list installation"
+        return 0
+    fi
+
+    print_info "Reading packages from: $package_list_file"
+
+    # Extract package names (remove version numbers after space)
+    # Filter out empty lines
+    local packages=()
+    while IFS= read -r line; do
+        # Extract package name (everything before the first space)
+        local pkg_name=$(echo "$line" | awk '{print $1}')
+
+        # Skip empty lines
+        if [ -n "$pkg_name" ]; then
+            packages+=("$pkg_name")
+        fi
+    done < "$package_list_file"
+
+    if [ ${#packages[@]} -eq 0 ]; then
+        print_warning "No packages found in Package List.md"
+        return 0
+    fi
+
+    print_info "Found ${#packages[@]} packages to install"
+
+    # Separate official repo packages from AUR packages
+    local official_pkgs=()
+    local aur_pkgs=()
+
+    print_info "Checking which packages are in official repos..."
+
+    for pkg in "${packages[@]}"; do
+        if pacman -Si "$pkg" &>/dev/null; then
+            official_pkgs+=("$pkg")
+        else
+            aur_pkgs+=("$pkg")
+        fi
+    done
+
+    # Install official packages
+    if [ ${#official_pkgs[@]} -gt 0 ]; then
+        print_info "Installing ${#official_pkgs[@]} packages from official repositories..."
+        sudo pacman -S --needed --noconfirm "${official_pkgs[@]}" || print_warning "Some official packages failed to install"
+    fi
+
+    # Install AUR packages
+    if [ ${#aur_pkgs[@]} -gt 0 ]; then
+        if command_exists yay; then
+            print_info "Installing ${#aur_pkgs[@]} packages from AUR..."
+            yay -S --needed --noconfirm "${aur_pkgs[@]}" || print_warning "Some AUR packages failed to install"
+        else
+            print_warning "yay not installed. Skipping ${#aur_pkgs[@]} AUR packages"
+            print_info "AUR packages that will be skipped: ${aur_pkgs[*]}"
+        fi
+    fi
+
+    print_info "Package installation from Package List complete"
+}
+
 # Install common utilities
 install_utilities() {
     print_section "Installing Common Utilities"
@@ -120,7 +188,7 @@ install_additional_tools() {
     print_section "Installing Additional Tools"
     sudo pacman -S --noconfirm bat fd ripgrep
     sudo pacman -S --noconfirm fzf
-    sudo pacman -S --noconfirm exa
+    sudo pacman -S --noconfirm eza  # Modern replacement for ls (replaces deprecated exa)
     sudo pacman -S --noconfirm zoxide
     sudo pacman -S --noconfirm tldr
 }
@@ -190,12 +258,16 @@ install_gpu_drivers() {
 
     if lspci | grep -i amd > /dev/null; then
         print_info "AMD GPU detected"
+        # Note: xf86-video-amdgpu is optional; modesetting driver usually works well
+        # xf86-video-amdgpu may be needed for specific features or older hardware
         sudo pacman -S --noconfirm mesa xf86-video-amdgpu vulkan-radeon
     fi
 
     if lspci | grep -i intel > /dev/null; then
         print_info "Intel GPU detected"
-        sudo pacman -S --noconfirm mesa xf86-video-intel vulkan-intel
+        # Note: xf86-video-intel is not recommended for modern Intel GPUs (Haswell and newer)
+        # The modesetting driver (included in xorg-server) is preferred
+        sudo pacman -S --noconfirm mesa vulkan-intel
     fi
 }
 
@@ -219,6 +291,7 @@ apply_system_tweaks() {
     sudo sysctl --system
 
     # Improve I/O scheduler for SSDs
+    # Note: mq-deadline is good for SATA SSDs; for NVMe, "none" might perform better
     echo 'ACTION=="add|change", KERNEL=="sd[a-z]*|nvme[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"' | sudo tee /etc/udev/rules.d/60-ioschedulers.rules
 
     # Enable periodic TRIM for SSDs
@@ -267,6 +340,7 @@ main() {
     update_system
     install_base_devel
     install_yay
+    install_from_package_list
     install_utilities
     install_languages
     install_docker

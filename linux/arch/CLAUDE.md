@@ -1,0 +1,1 @@
+- When using the context7 mcp, don't use an api key.
