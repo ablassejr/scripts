@@ -56,69 +56,205 @@ RSYNC_OPTS=(
 
 # Common directories and files to exclude from sync
 EXCLUDES=(
-    # Cache directories
+    # ============================================================================
+    # SECURITY & CREDENTIALS (DO NOT SYNC)
+    # ============================================================================
+    '.ssh/id_*'                     # SSH private keys (keep machine-specific)
+    '.ssh/known_hosts'              # Machine-specific SSH hosts
+    '.gnupg/private-keys-v1.d/'     # GPG private keys
+    '.gnupg/random_seed'            # GPG random seed
+    '.password-store/'              # Password manager data (sync separately if needed)
+    '.aws/credentials'              # AWS credentials
+    '.config/gcloud/credentials/'   # Google Cloud credentials
+    '.kube/config'                  # Kubernetes config (may contain certs)
+    '.docker/config.json'           # Docker credentials
+
+    # ============================================================================
+    # CACHE DIRECTORIES (Rebuild on each machine)
+    # ============================================================================
     '.cache/'
     '.npm/'
     '.yarn/'
     '.pnpm-store/'
+    '.node-gyp/'
     '.cargo/registry/'
     '.cargo/git/'
     '.rustup/toolchains/'
+    '.rustup/downloads/'
+    '.rustup/tmp/'
     '.gradle/caches/'
+    '.gradle/wrapper/'
     '.m2/repository/'
+    '.ivy2/cache/'
+    '.sbt/boot/'
     'node_modules/'
     '__pycache__/'
     '.pytest_cache/'
+    '.mypy_cache/'
+    '.ruff_cache/'
+    '*.pyc'
+    '.pip/'
+    '.conda/pkgs/'
+    '.gem/cache/'
+    'go/pkg/mod/'
+    '.ccache/'
 
-    # Temporary files
+    # ============================================================================
+    # TEMPORARY FILES
+    # ============================================================================
     '.tmp/'
     'tmp/'
     '*.tmp'
     '*.temp'
+    '*.swp'
+    '*.swo'
+    '*~'
     '.Trash*/'
+    '.nohup.out'
 
-    # Build artifacts
+    # ============================================================================
+    # BUILD ARTIFACTS (Rebuild on each machine)
+    # ============================================================================
     'target/'
     'build/'
     'dist/'
     '.next/'
     'out/'
+    '.turbo/'
+    '.nuxt/'
+    '.output/'
+    '.vercel/'
+    'venv/'
+    'env/'
+    '.venv/'
+    '.env/'
+    '__pypackages__/'
 
-    # IDE and editor files
+    # ============================================================================
+    # IDE AND EDITOR FILES (Machine-specific)
+    # ============================================================================
     '.vscode/extensions/'
+    '.vscode-server/'
+    '.vscode-insiders/'
     '.local/share/JetBrains/'
+    '.config/JetBrains/*/eval/'
+    '.local/share/nvim/swap/'
+    '.local/share/nvim/shada/'
+    '.vim/swap/'
+    '.vim/backup/'
+    '.vim/undo/'
 
-    # Browser data (too large and not needed)
+    # ============================================================================
+    # BROWSER DATA (Too large and machine-specific)
+    # ============================================================================
     '.mozilla/firefox/*/cache2/'
     '.mozilla/firefox/*/startupCache/'
+    '.mozilla/firefox/*/storage/default/*/cache/'
+    '.mozilla/firefox/*/thumbnails/'
     '.config/google-chrome/*/Cache/'
+    '.config/google-chrome/*/Code Cache/'
+    '.config/google-chrome/*/GPUCache/'
+    '.config/google-chrome/*/Service Worker/'
     '.config/chromium/*/Cache/'
+    '.config/chromium/*/Code Cache/'
     '.config/BraveSoftware/*/Cache/'
+    '.config/BraveSoftware/*/Code Cache/'
+    '.config/vivaldi/*/Cache/'
+    '.config/opera/*/Cache/'
 
-    # System and runtime files
+    # ============================================================================
+    # SYSTEM AND RUNTIME FILES
+    # ============================================================================
     '.local/share/Trash/'
     '.gvfs/'
     '.dbus/'
     '.thumbnails/'
+    '.xsession-errors*'
+    '.ICEauthority'
+    '.Xauthority'
+    '.nvidia-settings-rc'
+    '.pulse-cookie'
+    '.esd_auth'
+    '.local/share/recently-used.xbel'
 
-    # Package manager caches
+    # ============================================================================
+    # PACKAGE MANAGER CACHES
+    # ============================================================================
     '.local/share/paru/'
     '.local/share/yay/'
+    '.cache/pacman/'
+    '.cache/yay/'
+    '.cache/paru/'
 
-    # Docker and VM images (usually too large)
+    # ============================================================================
+    # CONTAINERS, VMs, AND VIRTUALIZATION (Too large)
+    # ============================================================================
     '.docker/volumes/'
+    '.docker/containers/'
+    '.docker/image/'
+    '.docker/overlay2/'
     '.local/share/containers/'
+    '.local/share/podman/'
     'VirtualBox VMs/'
+    '.vagrant.d/boxes/'
+    'vmware/'
+    '.minikube/cache/'
 
-    # Steam and game files (optional - uncomment if needed)
-    # '.local/share/Steam/'
-    # '.steam/'
+    # ============================================================================
+    # FLATPAK AND SNAP (Machine-specific installs)
+    # ============================================================================
+    '.local/share/flatpak/'
+    '.var/app/*/cache/'
 
-    # Lost+found
+    # ============================================================================
+    # DATABASES (Should not be synced while running)
+    # ============================================================================
+    '.local/share/akonadi/'
+    '.local/share/baloo/'
+    '.mozilla/firefox/*/places.sqlite-wal'
+    '.mozilla/firefox/*/places.sqlite-shm'
+    '*.db-wal'
+    '*.db-shm'
+
+    # ============================================================================
+    # GAMING (Optional - very large)
+    # ============================================================================
+    '.local/share/Steam/steamapps/common/'  # Game files
+    '.local/share/Steam/steamapps/downloading/'
+    '.steam/steam/steamapps/common/'
+    '.steam/steam/steamapps/downloading/'
+    'Games/Steam/'
+    '.local/share/lutris/runners/'
+
+    # ============================================================================
+    # MAIL (Sync separately if needed)
+    # ============================================================================
+    '.thunderbird/*/ImapMail/'
+    '.local/share/evolution/mail/'
+    'Mail/'
+    'Maildir/'
+
+    # ============================================================================
+    # LOGS (Machine-specific)
+    # ============================================================================
+    '*.log'
+    '.xsession-errors'
+    '.local/share/xorg/'
+
+    # ============================================================================
+    # MISC
+    # ============================================================================
     'lost+found/'
-
-    # Rsync temp files
     '.rsync-partial/'
+    '.nfs*'
+
+    # Wine prefixes (can be large)
+    '.wine/drive_c/windows/'
+
+    # Electron app caches
+    '.config/*/Cache/'
+    '.config/*/GPUCache/'
+    '.config/*/Code Cache/'
 )
 
 # ============================================================================
