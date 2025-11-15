@@ -14,9 +14,9 @@ set -euo pipefail
 # ============================================================================
 
 # Remote machine settings (customize these)
-DESKTOP_HOST="draogo-omarchy-desktop"  # SSH hostname or IP for desktop
-LAPTOP_HOST="draogo-omarchy-laptop"    # SSH hostname or IP for laptop
-REMOTE_USER="${USER}"   # Username on remote machine (defaults to current user)
+DESKTOP_HOST="192.168.50.107"  # SSH hostname or IP for desktop
+LAPTOP_HOST="192.168.50.48"    # SSH hostname or IP for laptop
+REMOTE_USER="draogo"   # Username on remote machine (defaults to current user)
 
 # Source directory (always use home directory)
 SOURCE_DIR="${HOME}/"
@@ -169,7 +169,7 @@ verify_remote_host() {
     local host="$1"
     log_message "Verifying connection to ${REMOTE_USER}@${host}..."
 
-    if ! ssh -o ConnectTimeout=5 -o BatchMode=yes "${REMOTE_USER}@${host}" exit 2>/dev/null; then
+    if ! ssh -o ConnectTimeout=5 -o BatchMode=yes -i ~/.ssh/id_ed25519_rsync7 "${REMOTE_USER}@${host}" exit 2>/dev/null; then
         echo "ERROR: Cannot connect to ${REMOTE_USER}@${host}"
         echo "Please ensure:"
         echo "  1. SSH is configured and running on the remote machine"
