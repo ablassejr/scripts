@@ -1,0 +1,1 @@
+/home/draogo/.config/omarchy/current/theme/neovim.lua

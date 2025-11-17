@@ -3,6 +3,7 @@
 #####################################
 # Arch Linux Setup Script
 # Optimized for Arch Linux and Arch-based distributions
+# Includes: Package installation, SSH setup for rsync, Neovim nightly install
 #####################################
 
 set -e
@@ -200,6 +201,148 @@ install_editors() {
     sudo pacman -S --noconfirm code  # VS Code
 }
 
+# Install Neovim Nightly (optional)
+install_neovim_nightly() {
+    print_section "Installing Neovim Nightly"
+
+    echo ""
+    read -p "Do you want to install Neovim nightly build? (y/N) " -n 1 -r
+    echo
+
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Skipping Neovim nightly installation"
+        return 0
+    fi
+
+    print_info "Downloading Neovim nightly..."
+    cd /tmp
+
+    # Download latest nightly
+    if curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz; then
+        print_info "Removing old Neovim nightly installation (if exists)..."
+        sudo rm -rf /opt/nvim-linux-x86_64
+
+        print_info "Extracting Neovim nightly to /opt..."
+        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+
+        print_info "Creating symlink to /usr/local/bin/nvim..."
+        sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+
+        # Cleanup
+        rm -f nvim-linux-x86_64.tar.gz
+
+        print_info "Neovim nightly installed successfully!"
+        print_info "Version: $(/usr/local/bin/nvim --version | head -n 1)"
+        print_info "You may need to add /usr/local/bin to your PATH if not already present"
+    else
+        print_error "Failed to download Neovim nightly"
+        return 1
+    fi
+
+    cd -
+}
+
+# Setup SSH for rsync
+setup_ssh_for_rsync() {
+    print_section "Setting Up SSH for rsync"
+
+    echo ""
+    read -p "Do you want to setup SSH authentication for rsync? (y/N) " -n 1 -r
+    echo
+
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Skipping SSH setup"
+        return 0
+    fi
+
+    # Ensure openssh and rsync are installed
+    print_info "Ensuring SSH and rsync are installed..."
+    sudo pacman -S --needed --noconfirm openssh rsync
+
+    local SSH_DIR="${HOME}/.ssh"
+    local KEY_NAME="id_ed25519_rsync7"
+    local KEY_PATH="${SSH_DIR}/${KEY_NAME}"
+
+    # Create SSH directory if needed
+    if [ ! -d "${SSH_DIR}" ]; then
+        print_info "Creating SSH directory..."
+        mkdir -p "${SSH_DIR}"
+        chmod 700 "${SSH_DIR}"
+    fi
+
+    # Check if key already exists
+    if [ -f "${KEY_PATH}" ]; then
+        print_warning "SSH key already exists: ${KEY_PATH}"
+        echo ""
+        read -p "Do you want to use the existing key? (Y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            print_info "Generating new SSH key..."
+            ssh-keygen -t ed25519 \
+                -C "rsync-key-$(hostname)-$(date +%Y%m%d)" \
+                -f "${KEY_PATH}"
+            chmod 600 "${KEY_PATH}"
+            chmod 644 "${KEY_PATH}.pub"
+        fi
+    else
+        print_info "Generating Ed25519 SSH key for rsync..."
+        echo ""
+        print_warning "PASSPHRASE OPTIONS:"
+        echo "  - With passphrase: More secure, but requires entry (can use ssh-agent)"
+        echo "  - Without passphrase: Less secure, but enables full automation"
+        echo ""
+
+        ssh-keygen -t ed25519 \
+            -C "rsync-key-$(hostname)-$(date +%Y%m%d)" \
+            -f "${KEY_PATH}"
+
+        chmod 600 "${KEY_PATH}"
+        chmod 644 "${KEY_PATH}.pub"
+    fi
+
+    print_info "SSH key ready at: ${KEY_PATH}"
+    echo ""
+    print_info "Your public key:"
+    echo "────────────────────────────────────────────────────────────"
+    cat "${KEY_PATH}.pub"
+    echo "────────────────────────────────────────────────────────────"
+    echo ""
+
+    echo ""
+    read -p "Do you want to copy the public key to a remote machine now? (y/N) " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        read -p "Enter remote host (IP or hostname): " REMOTE_HOST
+        read -p "Enter remote username [${USER}]: " REMOTE_USER
+        REMOTE_USER=${REMOTE_USER:-${USER}}
+
+        print_info "Copying public key to ${REMOTE_USER}@${REMOTE_HOST}..."
+        print_info "You will be prompted for the password on the remote machine"
+        echo ""
+
+        if ssh-copy-id -i "${KEY_PATH}.pub" "${REMOTE_USER}@${REMOTE_HOST}"; then
+            print_info "Public key copied successfully!"
+
+            # Test connection
+            print_info "Testing SSH connection..."
+            if ssh -i "${KEY_PATH}" -o BatchMode=yes "${REMOTE_USER}@${REMOTE_HOST}" 'echo "Connection successful!"'; then
+                print_info "✓ SSH connection working!"
+            else
+                print_warning "SSH test failed. You may need to troubleshoot."
+            fi
+        else
+            print_warning "Failed to copy public key. You may need to do this manually."
+        fi
+    fi
+
+    print_info "SSH setup complete!"
+    echo ""
+    print_info "To use this key with rsync:"
+    echo "  rsync -avz -e 'ssh -i ${KEY_PATH}' /source/ user@host:/dest/"
+}
+
 # Install ZSH
 install_zsh() {
     print_section "Installing ZSH"
@@ -346,6 +489,8 @@ main() {
     install_docker
     install_additional_tools
     install_editors
+    install_neovim_nightly
+    setup_ssh_for_rsync
     install_zsh
     install_fonts
     install_display_tools
